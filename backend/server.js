@@ -1,19 +1,22 @@
+import "dotenv/config";   // 🔥 ye sabse pehle hona chahiye
+
 import express from "express";
-import dotenv from "dotenv";
+import cors from "cors";
 import connectDB from "./config/db.js";
 
+import chatRoutes from "./routes/chat.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import moodRoutes from "./routes/mood.routes.js";
 
-dotenv.config();          // ✅ load env variables
-connectDB();              // ✅ connect MongoDB
+connectDB();
 
 const app = express();
-
+app.use(cors());
 app.use(express.json());
 
 app.use("/api/auth", authRoutes);
 app.use("/api/mood", moodRoutes);
+app.use("/api/chat", chatRoutes);
 
 app.get("/", (req, res) => {
   res.send("Backend running");

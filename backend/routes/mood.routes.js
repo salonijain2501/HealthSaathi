@@ -58,5 +58,86 @@ router.post("/add", authMiddleware, async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
+// 🔹 GET MY MOODS
+router.get("/my", authMiddleware, async (req, res) => {
+  try {
+    const moods = await Mood.find({ user: req.user.id }).sort({ date: -1 });
+    res.json(moods);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
 
+// 🔹 GET GRAPH DATA
+router.get("/graph", authMiddleware, async (req, res) => {
+  try {
+    const moods = await Mood.find({ user: req.user.id }).sort({ date: 1 });
+    res.json(moods);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 🔹 DELETE MOOD
+router.delete("/:id", authMiddleware, async (req, res) => {
+  try {
+    await Mood.findByIdAndDelete(req.params.id);
+    res.json({ message: "Mood deleted" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// 🔹 UPDATE MOOD
+router.put("/:id", authMiddleware, async (req, res) => {
+  try {
+    const { mood, note } = req.body;
+
+    const updated = await Mood.findByIdAndUpdate(
+      req.params.id,
+      { mood, note },
+      { new: true }
+    );
+
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+// 🔹 AI MOOD ANALYSIS
+router.get("/analysis", authMiddleware, async (req, res) => {
+  try {
+
+    const moods = await Mood.find({ user: req.user.id })
+      .sort({ date: -1 })
+      .limit(7);
+
+    if (moods.length === 0) {
+      return res.json({
+        suggestion: "Start logging moods to get AI insights."
+      });
+    }
+
+    const prompt = buildPrompt({
+      mood: moods[0].mood,
+      note: moods[0].note,
+      timeOfDay: getTimeOfDay(),
+      streak: calculateStreak(moods)
+    });
+
+    let suggestion;
+
+    try {
+      suggestion = await getAISuggestionFromOpenAI(prompt);
+    } catch (error) {
+      suggestion = getFallbackSuggestion(moods[0].mood);
+    }
+
+    res.json({ suggestion });
+
+  } catch (err) {
+    console.error("AI analysis error:", err);
+    res.status(500).json({ message: "AI analysis failed" });
+  }
+});
 export default router;
