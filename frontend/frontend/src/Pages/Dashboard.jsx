@@ -11,6 +11,7 @@ const Dashboard = () => {
   const [note, setNote] = useState("");
   const [moods, setMoods] = useState([]);
   const [graphMoods, setGraphMoods] = useState([]);
+  const [analysis, setAnalysis] = useState(""); 
 
   const [isEditing, setIsEditing] = useState(false);
   const [editId, setEditId] = useState(null);
@@ -63,6 +64,7 @@ const Dashboard = () => {
       setNote("");
       fetchMoods();
       fetchMoodGraph();
+      fetchAnalysis();  
     } catch (err) {
       console.error("Add mood error:", err);
     }
@@ -112,6 +114,14 @@ const Dashboard = () => {
     fetchMoods();
     fetchMoodGraph();
   }, []);
+  const fetchAnalysis = async () => {
+  try {
+    const res = await API.get("/mood/analysis");
+    setAnalysis(res.data.suggestion);
+  } catch (err) {
+    console.error("AI analysis error:", err);
+  }
+};
 
   return (
     <div style={{ padding: "20px" }}>
@@ -193,6 +203,25 @@ const Dashboard = () => {
       )}
 
       <hr />
+      
+
+<h3>AI Mood Insight 🤖</h3>
+
+{analysis ? (
+  <div
+    style={{
+      background: "#f0f4ff",
+      padding: "15px",
+      borderRadius: "10px",
+      marginBottom: "20px",
+      border: "1px solid #d0d8ff",
+    }}
+  >
+    {analysis}
+  </div>
+) : (
+  <p>No AI insights yet</p>
+)}
 
       {/* 🔹 MOOD LIST */}
       <h3>My Moods</h3>
