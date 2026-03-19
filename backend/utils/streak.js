@@ -5,7 +5,7 @@ export const calculateStreak = (moods) => {
 
   for (let i = moods.length - 1; i > 0; i--) {
     const diff =
-      (new Date(moods[i].date) - new Date(moods[i - 1].date)) /
+      (new Date(moods[i].createdAt) - new Date(moods[i - 1].createdAt)) /
       (1000 * 60 * 60 * 24);
 
     if (Math.floor(diff) === 1) {

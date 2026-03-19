@@ -10,22 +10,20 @@ import { getFallbackSuggestion } from "../utils/fallbackSuggestions.js";
 const router = express.Router();
 
 /**
- * @route   POST /api/mood/add
- * @desc    Add mood + generate AI suggestion
- * @access  Private
+ * 🔹 ADD MOOD
  */
 router.post("/add", authMiddleware, async (req, res) => {
   try {
     const { mood, note } = req.body;
 
-    // 1️⃣ Fetch user's previous moods
-    const userMoods = await Mood.find({ user: req.user.id }).sort({ date: 1 });
+    // Fetch previous moods
+    const userMoods = await Mood.find({ user: req.user.id }).sort({ createdAt: 1 });
 
-    // 2️⃣ Calculate streak & time
+    // Calculate streak
     const streak = calculateStreak(userMoods);
     const timeOfDay = getTimeOfDay();
 
-    // 3️⃣ Build prompt
+    // Build AI prompt
     const prompt = buildPrompt({
       mood,
       note,
@@ -33,17 +31,15 @@ router.post("/add", authMiddleware, async (req, res) => {
       streak,
     });
 
-    // 4️⃣ AI suggestion (OpenAI → fallback)
+    // AI Suggestion
     let aiSuggestion;
-
     try {
       aiSuggestion = await getAISuggestionFromOpenAI(prompt);
     } catch (error) {
-      console.error("OpenAI failed:", error.message);
       aiSuggestion = getFallbackSuggestion(mood);
     }
 
-    // 5️⃣ SAVE TO DATABASE ✅ (THIS WAS MISSING)
+    // Save mood
     const savedMood = await Mood.create({
       user: req.user.id,
       mood,
@@ -51,34 +47,39 @@ router.post("/add", authMiddleware, async (req, res) => {
       aiSuggestion,
     });
 
-    // 6️⃣ Send response
     res.status(201).json(savedMood);
   } catch (err) {
-    console.error("Mood add error:", err.message);
     res.status(500).json({ message: err.message });
   }
 });
-// 🔹 GET MY MOODS
+
+/**
+ * 🔹 GET MY MOODS
+ */
 router.get("/my", authMiddleware, async (req, res) => {
   try {
-    const moods = await Mood.find({ user: req.user.id }).sort({ date: -1 });
+    const moods = await Mood.find({ user: req.user.id }).sort({ createdAt: -1 });
     res.json(moods);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// 🔹 GET GRAPH DATA
+/**
+ * 🔹 GRAPH DATA
+ */
 router.get("/graph", authMiddleware, async (req, res) => {
   try {
-    const moods = await Mood.find({ user: req.user.id }).sort({ date: 1 });
+    const moods = await Mood.find({ user: req.user.id }).sort({ createdAt: 1 });
     res.json(moods);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 });
 
-// 🔹 DELETE MOOD
+/**
+ * 🔹 DELETE MOOD
+ */
 router.delete("/:id", authMiddleware, async (req, res) => {
   try {
     await Mood.findByIdAndDelete(req.params.id);
@@ -88,7 +89,9 @@ router.delete("/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// 🔹 UPDATE MOOD
+/**
+ * 🔹 UPDATE MOOD
+ */
 router.put("/:id", authMiddleware, async (req, res) => {
   try {
     const { mood, note } = req.body;
@@ -104,12 +107,58 @@ router.put("/:id", authMiddleware, async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-// 🔹 AI MOOD ANALYSIS
+
+/**
+ * 🔹 STATS (Last 7 Days)
+ */
+router.get("/stats", authMiddleware, async (req, res) => {
+  try {
+    const last7Days = await Mood.aggregate([
+      {
+        $match: {
+          user: req.user.id,
+          createdAt: {
+            $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+          }
+        }
+      },
+      {
+        $group: {
+          _id: "$mood",
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    res.json(last7Days);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * 🔥 STREAK API (FIXED)
+ */
+router.get("/streak", authMiddleware, async (req, res) => {
+  try {
+    const moods = await Mood.find({ user: req.user.id })
+      .sort({ createdAt: 1 });
+
+    const streak = calculateStreak(moods);
+
+    res.json({ streak });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
+/**
+ * 🔹 AI ANALYSIS
+ */
 router.get("/analysis", authMiddleware, async (req, res) => {
   try {
-
     const moods = await Mood.find({ user: req.user.id })
-      .sort({ date: -1 })
+      .sort({ createdAt: -1 })
       .limit(7);
 
     if (moods.length === 0) {
@@ -126,7 +175,6 @@ router.get("/analysis", authMiddleware, async (req, res) => {
     });
 
     let suggestion;
-
     try {
       suggestion = await getAISuggestionFromOpenAI(prompt);
     } catch (error) {
@@ -136,8 +184,8 @@ router.get("/analysis", authMiddleware, async (req, res) => {
     res.json({ suggestion });
 
   } catch (err) {
-    console.error("AI analysis error:", err);
     res.status(500).json({ message: "AI analysis failed" });
   }
 });
+
 export default router;
