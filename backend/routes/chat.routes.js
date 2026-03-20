@@ -1,5 +1,5 @@
 import express from "express";
-import { getAISuggestionFromOpenAI } from "../services/openai.service.js";
+import { getAISuggestion } from "../services/ai.service.js";
 import { getFallbackSuggestion } from "../utils/fallbackSuggestions.js";
 
 const router = express.Router();
