@@ -147,6 +147,8 @@ router.get("/streak", authMiddleware, async (req, res) => {
   }
 });
 
+
+
 /**
  * 🔥 AI ANALYSIS
  */

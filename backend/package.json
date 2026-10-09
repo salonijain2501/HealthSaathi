@@ -1,26 +1,35 @@
 {
-  "name": "healthsaathi",
+  "name": "healthsaathi-api",
   "version": "1.0.0",
-  "description": "",
+  "description": "HealthSaathi backend API",
   "main": "server.js",
   "type": "module",
-  "scripts": {
-    "start": "nodemon server.js"
+  "engines": {
+    "node": ">=18.0.0"
   },
-  "keywords": [],
-  "author": "",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "health",
+    "mental-wellness",
+    "api"
+  ],
+  "author": "HealthSaathi",
   "license": "ISC",
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "bcryptjs": "^3.0.3",
-    "chart.js": "^4.5.1",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.7.1",
+    "google-auth-library": "^11.2.0",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.0.2",
-    "openai": "^6.15.0",
-    "react-chartjs-2": "^5.3.1"
+    "openai": "^6.15.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"
